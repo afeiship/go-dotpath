@@ -1,8 +1,11 @@
 {
-  "name": "rails-module-pages",
+  "name": "@jswork/go-dotpath",
   "private": true,
+  "version": "1.0.0",
+  "description": "Get, set, update, and save nested maps using dot notation.",
+  "license": "MIT",
   "scripts": {
-    "start":"./bin/rails server"
-  },
-  "dependencies": {}
+    "test": "go test __tests__/*.go -v",
+    "release": "release-it"
+  }
 }
