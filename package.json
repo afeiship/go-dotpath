@@ -1,7 +1,7 @@
 {
   "name": "go-dotpath",
   "private": true,
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Get, set, update, and save nested maps using dot notation.",
   "license": "MIT",
   "scripts": {
