@@ -1,5 +1,5 @@
 {
-  "name": "@jswork/go-dotpath",
+  "name": "go-dotpath",
   "private": true,
   "version": "1.0.0",
   "description": "Get, set, update, and save nested maps using dot notation.",

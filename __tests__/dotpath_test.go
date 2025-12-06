@@ -14,7 +14,7 @@ func TestNew(t *testing.T) {
 	}
 
 	// Test with existing map
-	m := map[string]interface{}{"key": "value"}
+	m := map[string]any{"key": "value"}
 	dp = dotpath.New(m)
 	if dp.GetString("key") != "value" {
 		t.Error("Expected existing map to be preserved")
@@ -22,8 +22,8 @@ func TestNew(t *testing.T) {
 }
 
 func TestGet(t *testing.T) {
-	m := map[string]interface{}{
-		"app": map[string]interface{}{
+	m := map[string]any{
+		"app": map[string]any{
 			"name": "demo",
 			"port": 8080,
 		},
@@ -60,8 +60,8 @@ func TestGet(t *testing.T) {
 }
 
 func TestGetString(t *testing.T) {
-	m := map[string]interface{}{
-		"app": map[string]interface{}{
+	m := map[string]any{
+		"app": map[string]any{
 			"name": "demo",
 			"port": 8080, // int type
 		},
@@ -91,7 +91,7 @@ func TestGetString(t *testing.T) {
 }
 
 func TestGetInt(t *testing.T) {
-	m := map[string]interface{}{
+	m := map[string]any{
 		"port":         8080,
 		"floatPort":    8080.0,
 		"invalidFloat": 808.5,
@@ -126,7 +126,7 @@ func TestGetInt(t *testing.T) {
 }
 
 func TestGetBool(t *testing.T) {
-	m := map[string]interface{}{
+	m := map[string]any{
 		"debug":    true,
 		"disabled": false,
 		"number":   1,
@@ -155,7 +155,7 @@ func TestGetBool(t *testing.T) {
 }
 
 func TestGetFloat64(t *testing.T) {
-	m := map[string]interface{}{
+	m := map[string]any{
 		"pi":      3.14159,
 		"whole":   42.0,
 		"integer": 42,
@@ -190,8 +190,8 @@ func TestGetFloat64(t *testing.T) {
 }
 
 func TestHas(t *testing.T) {
-	m := map[string]interface{}{
-		"app": map[string]interface{}{
+	m := map[string]any{
+		"app": map[string]any{
 			"name": "demo",
 		},
 	}
@@ -271,16 +271,16 @@ func TestSetWithConflict(t *testing.T) {
 }
 
 func TestUpdate(t *testing.T) {
-	dp := dotpath.New(map[string]interface{}{
-		"app": map[string]interface{}{
+	dp := dotpath.New(map[string]any{
+		"app": map[string]any{
 			"name": "demo",
 			"port": 3000,
 		},
 		"debug": true,
 	})
 
-	other := map[string]interface{}{
-		"app": map[string]interface{}{
+	other := map[string]any{
+		"app": map[string]any{
 			"port":    8080, // Should overwrite existing
 			"version": "1.0.0", // Should be added
 		},
@@ -312,7 +312,7 @@ func TestUpdate(t *testing.T) {
 }
 
 func TestUpdateWithNil(t *testing.T) {
-	dp := dotpath.New(map[string]interface{}{"key": "value"})
+	dp := dotpath.New(map[string]any{"key": "value"})
 	originalSize := len(dp.Data())
 
 	dp.Update(nil)
@@ -322,9 +322,9 @@ func TestUpdateWithNil(t *testing.T) {
 }
 
 func TestData(t *testing.T) {
-	original := map[string]interface{}{
+	original := map[string]any{
 		"key": "value",
-		"nested": map[string]interface{}{
+		"nested": map[string]any{
 			"inner": true,
 		},
 	}
@@ -344,19 +344,19 @@ func TestData(t *testing.T) {
 
 func TestDeepMergeViaUpdate(t *testing.T) {
 	// Test deep merge functionality via Update method
-	dp := dotpath.New(map[string]interface{}{
+	dp := dotpath.New(map[string]any{
 		"a": 1,
 		"b": 2,
-		"nested": map[string]interface{}{
+		"nested": map[string]any{
 			"x": 10,
 			"y": 20,
 		},
 	})
 
-	updates := map[string]interface{}{
+	updates := map[string]any{
 		"b": 3,           // Should overwrite
 		"c": 4,           // Should be added
-		"nested": map[string]interface{}{
+		"nested": map[string]any{
 			"y": 30,       // Should overwrite nested
 			"z": 40,       // Should be added nested
 		},
@@ -377,7 +377,7 @@ func TestDeepMergeViaUpdate(t *testing.T) {
 	}
 
 	// Check nested merge
-	nested := data["nested"].(map[string]interface{})
+	nested := data["nested"].(map[string]any)
 	if nested["x"] != 10 {
 		t.Error("Original nested value should be preserved")
 	}
@@ -391,8 +391,8 @@ func TestDeepMergeViaUpdate(t *testing.T) {
 
 // Example test from the PRD
 func TestExampleFromPRD(t *testing.T) {
-	m := map[string]interface{}{
-		"app": map[string]interface{}{
+	m := map[string]any{
+		"app": map[string]any{
 			"name": "demo",
 		},
 	}

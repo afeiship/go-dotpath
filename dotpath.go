@@ -1,20 +1,20 @@
 package dotpath
 
-// DotPath wraps map[string]interface{} to provide dot-notation access and mutation
+// DotPath wraps map[string]any to provide dot-notation access and mutation
 type DotPath struct {
-	data map[string]interface{}
+	data map[string]any
 }
 
 // New creates a new DotPath instance wrapping the provided map
-func New(m map[string]interface{}) *DotPath {
+func New(m map[string]any) *DotPath {
 	if m == nil {
-		m = make(map[string]interface{})
+		m = make(map[string]any)
 	}
 	return &DotPath{data: m}
 }
 
 // Get retrieves a value by dot path and returns the value along with a boolean indicating success
-func (dp *DotPath) Get(path string) (interface{}, bool) {
+func (dp *DotPath) Get(path string) (any, bool) {
 	if path == "" {
 		return dp.data, true
 	}
@@ -33,7 +33,7 @@ func (dp *DotPath) Get(path string) (interface{}, bool) {
 
 		// Navigate to nested map
 		if val, exists := current[key]; exists {
-			if nextMap, ok := val.(map[string]interface{}); ok {
+			if nextMap, ok := val.(map[string]any); ok {
 				current = nextMap
 			} else {
 				// Path exists but is not a map
@@ -101,7 +101,7 @@ func (dp *DotPath) Has(path string) bool {
 }
 
 // Set sets a value by dot path, automatically creating nested maps as needed
-func (dp *DotPath) Set(path string, value interface{}) {
+func (dp *DotPath) Set(path string, value any) {
 	if path == "" {
 		return
 	}
@@ -118,17 +118,17 @@ func (dp *DotPath) Set(path string, value interface{}) {
 
 		// Navigate or create nested map
 		if val, exists := current[key]; exists {
-			if nextMap, ok := val.(map[string]interface{}); ok {
+			if nextMap, ok := val.(map[string]any); ok {
 				current = nextMap
 			} else {
 				// Path exists but is not a map, replace with new map
-				newMap := make(map[string]interface{})
+				newMap := make(map[string]any)
 				current[key] = newMap
 				current = newMap
 			}
 		} else {
 			// Create new nested map
-			newMap := make(map[string]interface{})
+			newMap := make(map[string]any)
 			current[key] = newMap
 			current = newMap
 		}
@@ -136,7 +136,7 @@ func (dp *DotPath) Set(path string, value interface{}) {
 }
 
 // Update performs a deep recursive merge of another map into the current data
-func (dp *DotPath) Update(other map[string]interface{}) {
+func (dp *DotPath) Update(other map[string]any) {
 	if other == nil {
 		return
 	}
@@ -144,7 +144,7 @@ func (dp *DotPath) Update(other map[string]interface{}) {
 }
 
 // Data returns the underlying map for serialization, inspection, etc.
-func (dp *DotPath) Data() map[string]interface{} {
+func (dp *DotPath) Data() map[string]any {
 	return dp.data
 }
 
@@ -176,16 +176,16 @@ func splitPath(path string) []string {
 }
 
 // deepMerge recursively merges two maps, with values from src taking precedence
-func deepMerge(dest, src map[string]interface{}) map[string]interface{} {
+func deepMerge(dest, src map[string]any) map[string]any {
 	if dest == nil {
-		dest = make(map[string]interface{})
+		dest = make(map[string]any)
 	}
 
 	for key, srcVal := range src {
 		if destVal, exists := dest[key]; exists {
 			// If both values are maps, merge them recursively
-			if destMap, ok := destVal.(map[string]interface{}); ok {
-				if srcMap, ok := srcVal.(map[string]interface{}); ok {
+			if destMap, ok := destVal.(map[string]any); ok {
+				if srcMap, ok := srcVal.(map[string]any); ok {
 					dest[key] = deepMerge(destMap, srcMap)
 					continue
 				}
