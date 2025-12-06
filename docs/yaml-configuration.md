@@ -95,8 +95,8 @@ func main() {
     io.Set("monitoring.tracing.enabled", true)
     io.Set("database.pool.max", 200)
 
-    // Save updated configuration
-    if err := io.SaveToFile("config.yaml"); err != nil {
+    // Save updated configuration with comment preservation
+    if err := io.Save(); err != nil {
         log.Fatalf("Failed to save config: %v", err)
     }
 
@@ -964,5 +964,103 @@ func ValidateYAMLStructure(io *dotpath.DotIO) error {
     return nil
 }
 ```
+
+## Comment & Order Preservation
+
+The go-dotpath library provides intelligent YAML comment and order preservation when saving files.
+
+### Example with Comments
+
+```yaml
+# Database configuration
+database:
+  host: localhost
+  port: 5432
+  timeout: 30s  # Connection timeout in seconds
+
+# Application settings
+app:
+  name: "my-app"
+  version: "1.0.0"
+  debug: false  # Set to true for development
+```
+
+```go
+package main
+
+import (
+    "log"
+    "github.com/afeiship/go-dotpath"
+)
+
+func main() {
+    // Load YAML with comments
+    adapter, err := dotpath.LoadYAMLAdapter("config.yaml")
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    // Modify configuration
+    adapter.Set("database.username", "admin")
+    adapter.Set("app.debug", true)
+    adapter.Set("monitoring.enabled", true)
+
+    // Save back to original file - preserves comments and order
+    err = adapter.Save()
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    // Save to new file - preserves comments from original
+    err = adapter.SaveAs("config-backup.yaml")
+    if err != nil {
+        log.Fatal(err)
+    }
+}
+```
+
+### Resulting Files
+
+**Original `config.yaml` after `Save()`:**
+```yaml
+# Database configuration
+database:
+  host: localhost
+  port: 5432
+  timeout: 30s  # Connection timeout in seconds
+  username: admin
+
+# Application settings
+app:
+  name: "my-app"
+  version: "1.0.0"
+  debug: true  # Set to true for development
+```
+
+**New `config-backup.yaml` after `SaveAs()`:**
+```yaml
+# Database configuration
+database:
+  host: localhost
+  port: 5432
+  timeout: 30s  # Connection timeout in seconds
+  username: admin
+
+# Application settings
+app:
+  name: "my-app"
+  version: "1.0.0"
+  debug: true  # Set to true for development
+
+monitoring:
+  enabled: true
+```
+
+### Best Practices
+
+1. **Use `Save()`** for updating the same file you loaded from
+2. **Use `SaveAs()`** for creating backups or copies with preserved comments
+3. **Comments** are preserved exactly as they appear in the source file
+4. **Field order** is maintained from the original structure
 
 These examples demonstrate practical ways to use go-dotpath for YAML configuration management in real applications.

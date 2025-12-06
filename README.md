@@ -84,7 +84,8 @@ io.SaveToFile("config.yaml")
 - `LoadFromFile(path string) error`
 - `LoadFromString(s string) error`
 - `LoadFromBytes(data []byte) error`
-- `SaveToFile(path string) error`
+- `Save() error` - Save back to original file (YAML: preserves comments & order)
+- `SaveAs(path string) error` - Save to specified path (YAML: preserves comments & order)
 - `ToString() (string, error)`
 - `ToBytes() ([]byte, error)`
 - `SetFormat(format Format)`
@@ -98,19 +99,63 @@ io.SaveToFile("config.yaml")
 io := dotpath.NewDotIO(dotpath.JSON)
 io.LoadFromFile("config.json")
 io.Set("debug", true)
-io.SaveToFile("config.json")
+io.SaveAs("config.json")
 
-// YAML usage
+// YAML usage with comment preservation
 io := dotpath.NewDotIO(dotpath.YAML)
-io.LoadFromFile("config.yaml")
+io.LoadFromFile("config.yaml")  // File with comments
 io.Set("timeout", 30)
-io.SaveToFile("config.yaml")
+io.Save()  // Updates original file, preserving comments
+io.SaveAs("backup.yaml")  // Creates new file with original comments
 
 // Format switching
 io := dotpath.NewDotIO(dotpath.JSON)
 io.LoadFromFile("data.json")
 io.SetFormat(dotpath.YAML)  // Switch output format
-io.SaveToFile("data.yaml")
+io.SaveAs("data.yaml")
+```
+
+## Save Methods
+
+### Comment & Order Preservation (YAML)
+
+The library provides intelligent YAML file handling that preserves comments and formatting:
+
+```go
+// Load a YAML file with comments
+adapter, err := dotpath.LoadYAMLAdapter("config.yaml")
+
+// Modify data (in memory only)
+adapter.Set("database.host", "new-host")
+adapter.Set("app.debug", true)
+
+// Save back to original file - preserves comments & order
+err = adapter.Save()
+
+// Save to new file - preserves comments from original
+err = adapter.SaveAs("backup.yaml")
+
+// Save to existing file - preserves comments from target
+err = adapter.SaveAs("existing-config.yaml")
+```
+
+### Save Behavior
+
+| Method | JSON | YAML - New File | YAML - Existing File | YAML - Original File |
+|--------|------|----------------|-------------------|-------------------|
+| `Save()` | ❌ Not supported | ✅ Preserves original | ✅ Preserves original | ✅ Preserves original |
+| `SaveAs(path)` | ✅ Standard format | ✅ Preserves original | ✅ Preserves target | ✅ Preserves original |
+
+### File Operations
+
+```go
+// In-memory operations (no file I/O)
+adapter.Set("key", "value")      // Changes only in memory
+adapter.Update(updates)          // Changes only in memory
+
+// File operations
+adapter.Save()                   // Writes to file
+adapter.SaveAs("new_file.yaml") // Writes to file
 ```
 
 ## Core API

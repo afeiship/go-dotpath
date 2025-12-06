@@ -162,13 +162,8 @@ func (dio *DotIO) Save() error {
 		return fmt.Errorf("no original file path to save to - use SaveAs() instead")
 	}
 
-	// For YAML files, try to preserve comments and order
-	if dio.format == YAML {
-		return dio.saveWithPreservation(dio.originalPath, dio.originalPath)
-	}
-
-	// For JSON files, use standard save
-	return dio.saveStandard(dio.originalPath)
+	// Simply delegate to SaveAs with the original path
+	return dio.SaveAs(dio.originalPath)
 }
 
 // ToString converts data to string

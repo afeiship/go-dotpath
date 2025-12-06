@@ -51,8 +51,12 @@ err := jsonIO.LoadFromBytes([]byte(jsonStr))
 ### Saving Data
 
 ```go
-// To file
-err := jsonIO.SaveToFile("output.json")
+// To file with intelligent comment preservation (YAML)
+err := yamlIO.Save()           // Save back to original file
+err := yamlIO.SaveAs("new.yaml")  // Save to new path
+
+// To file (standard format)
+err := jsonIO.SaveAs("output.json")
 
 // To string
 str, err := jsonIO.ToString()
@@ -119,7 +123,8 @@ io.SaveToFile("config.yaml")
 
 ### Saving Methods
 
-- `SaveToFile(path string) error` - Save to file
+- `Save() error` - Save back to original file (YAML: preserves comments & order)
+- `SaveAs(path string) error` - Save to specified path (YAML: preserves comments & order)
 - `ToString() (string, error)` - Convert to string
 - `ToBytes() ([]byte, error)` - Convert to byte slice
 
@@ -192,13 +197,67 @@ func main() {
 
     // Save as YAML
     config.SetFormat(dotpath.YAML)
-    if err := config.SaveToFile("config.yaml"); err != nil {
+    if err := config.SaveAs("config.yaml"); err != nil {
         log.Fatalf("Failed to save config: %v", err)
     }
 
     log.Println("Configuration saved as YAML")
 }
 ```
+
+## YAML Comment & Order Preservation
+
+The DotIO adapter provides intelligent YAML file handling that preserves comments and field order when saving files.
+
+### Features
+
+- **Comment Preservation**: All YAML comments are preserved during save operations
+- **Order Preservation**: Field order is maintained from the original file
+- **Smart Source Selection**: Automatically chooses the best source for comment preservation
+
+### Behavior
+
+| Method | Target Exists | Comment Source | Use Case |
+|--------|---------------|---------------|----------|
+| `Save()` | N/A | Original file | Update the file you loaded from |
+| `SaveAs(path)` | No | Original file | Create new copy with original comments |
+| `SaveAs(path)` | Yes | Target file | Update existing file preserving its comments |
+
+### Example
+
+```go
+// Original config.yaml has comments:
+// # Database configuration
+// database:
+//   host: localhost
+//   port: 5432
+// # App settings
+// app:
+//   name: myapp
+
+adapter, err := dotpath.LoadYAMLAdapter("config.yaml")
+if err != nil {
+    log.Fatal(err)
+}
+
+// Modify data
+adapter.Set("database.username", "admin")
+adapter.Set("app.debug", true)
+
+// Save back - preserves original comments and order
+err = adapter.Save()
+// Result: Comments and order preserved, new fields added appropriately
+
+// Save as new file - preserves comments from original
+err = adapter.SaveAs("backup.yaml")
+// Result: New file has all comments from original config.yaml
+```
+
+### Limitations
+
+- **JSON**: No comment preservation (JSON doesn't support comments)
+- **YAML**: Only preserves line comments starting with `#`
+- **Structure**: Major structural changes may affect comment placement
 
 ## Integration with Core Library
 
