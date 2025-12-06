@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strings"
 
 	"gopkg.in/yaml.v3"
 )
@@ -121,10 +122,42 @@ func (dio *DotIO) ToBytes() ([]byte, error) {
 	case JSON:
 		return json.MarshalIndent(data, "", "  ")
 	case YAML:
-		return yaml.Marshal(data)
+		// Use a custom YAML marshaller for better formatting
+		return dio.marshalYAML(data)
 	default:
 		return nil, fmt.Errorf("unsupported format: %s", dio.format)
 	}
+}
+
+// marshalYAML provides better YAML formatting with consistent indentation
+func (dio *DotIO) marshalYAML(data any) ([]byte, error) {
+	// Use yaml.Marshal to generate YAML, then apply formatting optimizations
+	result, err := yaml.Marshal(data)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal YAML: %w", err)
+	}
+
+	// Apply simple formatting improvements
+	return formatYAML(string(result)), nil
+}
+
+// formatYAML applies formatting improvements to YAML output
+func formatYAML(yamlStr string) []byte {
+	// Remove trailing whitespace from each line
+	lines := strings.Split(yamlStr, "\n")
+	for i, line := range lines {
+		lines[i] = strings.TrimRight(line, " \t")
+	}
+
+	// Join lines and ensure single trailing newline
+	result := strings.Join(lines, "\n")
+	// Remove multiple trailing newlines
+	result = strings.TrimRight(result, "\n")
+	if result != "" {
+		result += "\n"
+	}
+
+	return []byte(result)
 }
 
 // GetFormat returns the current format
