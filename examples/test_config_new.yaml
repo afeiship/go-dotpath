@@ -1,0 +1,14 @@
+app:
+    debug: true
+    environment: production
+    name: myapp
+    version: "1.0"
+database:
+    host: localhost
+    password: secret123
+    port: 3306
+    username: admin
+features:
+    - auth
+    - logging
+    - metrics

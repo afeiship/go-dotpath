@@ -1,0 +1,11 @@
+# Database settings
+database:
+    host: localhost
+    password: secret123
+    port: 5432
+    username: admin
+# App metadata
+app:
+    debug: true
+    name: myapp
+    version: "1.0"

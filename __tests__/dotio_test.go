@@ -229,7 +229,7 @@ func TestDotIOToString(t *testing.T) {
 	}
 }
 
-func TestDotIOSaveToFile(t *testing.T) {
+func TestDotIOSaveAs(t *testing.T) {
 	adapter := dotpath.NewDotIO(dotpath.JSON)
 	adapter.Set("app", "demo")
 	adapter.Set("version", "2.0.0")
@@ -237,7 +237,7 @@ func TestDotIOSaveToFile(t *testing.T) {
 	tempDir := t.TempDir()
 	tempFile := filepath.Join(tempDir, "output.json")
 
-	if err := adapter.SaveToFile(tempFile); err != nil {
+	if err := adapter.SaveAs(tempFile); err != nil {
 		t.Fatalf("Failed to save to file: %v", err)
 	}
 

@@ -21,6 +21,7 @@ const (
 type DotIO struct {
 	dp    *DotPath
 	format Format
+	originalPath string // Track the original file path for Save() method
 }
 
 // NewDotIO creates a new DotIO with the specified format
@@ -62,6 +63,7 @@ func (dio *DotIO) LoadFromFile(path string) error {
 	}
 
 	dio.dp = New(result)
+	dio.originalPath = path // Store the original path
 	return nil
 }
 
@@ -91,8 +93,9 @@ func (dio *DotIO) LoadFromBytes(data []byte) error {
 	return nil
 }
 
-// SaveToFile saves data to file
-func (dio *DotIO) SaveToFile(path string) error {
+
+// saveStandard performs standard file save without comment preservation
+func (dio *DotIO) saveStandard(path string) error {
 	data, err := dio.ToBytes()
 	if err != nil {
 		return fmt.Errorf("failed to marshal data: %w", err)
@@ -100,6 +103,89 @@ func (dio *DotIO) SaveToFile(path string) error {
 
 	if err := os.WriteFile(path, data, 0644); err != nil {
 		return fmt.Errorf("failed to write file %s: %w", path, err)
+	}
+
+	return nil
+}
+
+// SaveAs saves data to specified path with preservation options
+// For YAML files, attempts to preserve comments and order from the target file if it exists
+func (dio *DotIO) SaveAs(path string) error {
+	// For YAML files, try to preserve comments and order from target file
+	if dio.format == YAML {
+		// Check if target file exists
+		if _, err := os.Stat(path); err == nil {
+			// File exists, try to preserve its comments and order
+			return dio.saveAsWithPreservation(path)
+		}
+	}
+
+	// For JSON files or non-existent YAML files, use standard save
+	return dio.saveStandard(path)
+}
+
+// saveAsWithPreservation saves to specified path preserving comments from existing file
+func (dio *DotIO) saveAsWithPreservation(path string) error {
+	// Read existing target file
+	existingContent, err := os.ReadFile(path)
+	if err != nil {
+		return fmt.Errorf("failed to read existing file: %w", err)
+	}
+
+	// Generate new YAML content
+	newYAML, err := dio.ToString()
+	if err != nil {
+		return fmt.Errorf("failed to generate YAML: %w", err)
+	}
+
+	// Preserve comments and order from existing file
+	preservedYAML := mergeYAMLWithPreservedOrder(string(existingContent), newYAML)
+
+	// Write to target file
+	if err := os.WriteFile(path, []byte(preservedYAML), 0644); err != nil {
+		return fmt.Errorf("failed to write file %s: %w", path, err)
+	}
+
+	return nil
+}
+
+// Save saves data back to the original file path
+// For YAML files, attempts to preserve comments and order
+// Returns an error if the adapter was not loaded from a file
+func (dio *DotIO) Save() error {
+	if dio.originalPath == "" {
+		return fmt.Errorf("no original file path to save to - use SaveAs() instead")
+	}
+
+	// For YAML files, try to preserve comments and order
+	if dio.format == YAML {
+		return dio.saveWithPreservation()
+	}
+
+	// For JSON files, use standard save
+	return dio.saveStandard(dio.originalPath)
+}
+
+// saveWithPreservation saves YAML files with comment and order preservation
+func (dio *DotIO) saveWithPreservation() error {
+	// Read original file
+	originalContent, err := os.ReadFile(dio.originalPath)
+	if err != nil {
+		return fmt.Errorf("failed to read original file: %w", err)
+	}
+
+	// Generate new YAML content
+	newYAML, err := dio.ToString()
+	if err != nil {
+		return fmt.Errorf("failed to generate YAML: %w", err)
+	}
+
+	// Preserve comments and order
+	preservedYAML := mergeYAMLWithPreservedOrder(string(originalContent), newYAML)
+
+	// Write back to file
+	if err := os.WriteFile(dio.originalPath, []byte(preservedYAML), 0644); err != nil {
+		return fmt.Errorf("failed to write file %s: %w", dio.originalPath, err)
 	}
 
 	return nil
@@ -220,6 +306,156 @@ func (dio *DotIO) Update(other map[string]any) {
 // Data returns the underlying map
 func (dio *DotIO) Data() map[string]any {
 	return dio.dp.Data()
+}
+
+// YAML preservation types and functions
+
+type yamlSection struct {
+	comment string
+	key     string
+	indent  string
+	content []string
+}
+
+// mergeYAMLWithPreservedOrder merges new YAML data with original preserving comments and order
+func mergeYAMLWithPreservedOrder(original, newYAML string) string {
+	originalLines := strings.Split(original, "\n")
+
+	var sections []yamlSection
+	var currentSection *yamlSection
+
+	// Parse original YAML sections
+	for i, line := range originalLines {
+		trimmed := strings.TrimSpace(line)
+
+		if strings.HasPrefix(trimmed, "#") {
+			// This is a comment, start new section
+			if currentSection != nil {
+				sections = append(sections, *currentSection)
+			}
+			currentSection = &yamlSection{
+				comment: line,
+				indent:  extractIndent(line),
+			}
+		} else if trimmed != "" && !strings.HasPrefix(trimmed, "#") {
+			// This is content
+			if currentSection == nil {
+				currentSection = &yamlSection{}
+			}
+
+			if currentSection.key == "" {
+				currentSection.key = extractKey(line)
+			}
+			currentSection.content = append(currentSection.content, line)
+
+			// Look ahead for nested content
+			if i+1 < len(originalLines) {
+				nextLine := originalLines[i+1]
+				if strings.HasPrefix(nextLine, " ") && !strings.HasPrefix(strings.TrimSpace(nextLine), "#") {
+					// Nested content
+					for j := i + 1; j < len(originalLines); j++ {
+						nestedLine := originalLines[j]
+						if strings.HasPrefix(nestedLine, " ") && !strings.HasPrefix(strings.TrimSpace(nestedLine), "#") {
+							currentSection.content = append(currentSection.content, nestedLine)
+							i = j
+						} else {
+							break
+						}
+					}
+				}
+			}
+			sections = append(sections, *currentSection)
+			currentSection = nil
+		}
+	}
+
+	// Parse new YAML data into map for easy lookup
+	newData := parseYAMLToMap(newYAML)
+
+	// Reconstruct with preserved order and updated values
+	var result []string
+	for _, section := range sections {
+		if section.comment != "" {
+			result = append(result, section.comment)
+		}
+
+		if section.key != "" {
+			if newValue, exists := newData[section.key]; exists {
+				result = append(result, newValue.content...)
+			}
+		}
+	}
+
+	// Add any new sections that weren't in original
+	for _, section := range sections {
+		if section.key == "" && len(section.content) > 0 {
+			// This might be new content without comment
+			result = append(result, section.content...)
+		}
+	}
+
+	return strings.Join(result, "\n")
+}
+
+// parseYAMLToMap parses YAML string into a map of sections
+func parseYAMLToMap(yamlStr string) map[string]*yamlSection {
+	lines := strings.Split(yamlStr, "\n")
+	result := make(map[string]*yamlSection)
+
+	var currentSection *yamlSection
+
+	for _, line := range lines {
+		trimmed := strings.TrimSpace(line)
+
+		if trimmed == "" {
+			continue
+		}
+
+		if !strings.HasPrefix(line, " ") && !strings.HasPrefix(trimmed, "#") {
+			// Top-level key
+			if currentSection != nil {
+				result[currentSection.key] = currentSection
+			}
+
+			key := extractKey(line)
+			currentSection = &yamlSection{
+				key:     key,
+				content: []string{line},
+			}
+		} else if currentSection != nil {
+			// Nested content
+			currentSection.content = append(currentSection.content, line)
+		}
+	}
+
+	if currentSection != nil {
+		result[currentSection.key] = currentSection
+	}
+
+	return result
+}
+
+// extractIndent extracts leading spaces from a line
+func extractIndent(line string) string {
+	return line[:len(line)-len(strings.TrimLeft(line, " "))]
+}
+
+// extractKey extracts the key from a YAML line
+func extractKey(line string) string {
+	trimmed := strings.TrimSpace(line)
+	if trimmed == "" || strings.HasPrefix(trimmed, "#") {
+		return ""
+	}
+
+	// Handle nested keys
+	parts := strings.Split(trimmed, ":")
+	if len(parts) > 0 {
+		key := strings.TrimSpace(parts[0])
+		// Remove list item marker if present
+		return strings.TrimPrefix(key, "- ")
+	}
+
+	return ""
 }
 
 // Static helper functions for creating adapters from existing files

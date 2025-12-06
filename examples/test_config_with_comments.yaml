@@ -1,0 +1,12 @@
+# Database settings
+database:
+    host: localhost
+    password: secret
+    port: 5432
+    username: admin
+# App metadata
+app:
+    debug: true
+    environment: production
+    name: myapp
+    version: "1.0"
