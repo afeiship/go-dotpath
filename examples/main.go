@@ -11,8 +11,8 @@ func main() {
 	fmt.Println("========================")
 
 	// Create initial configuration
-	config := map[string]interface{}{
-		"app": map[string]interface{}{
+	config := map[string]any{
+		"app": map[string]any{
 			"name":    "demo-app",
 			"version": "1.0.0",
 		},
@@ -66,12 +66,12 @@ func main() {
 	// Demonstrate update/merge
 	fmt.Println("\n=== Update/Merge ===")
 
-	updates := map[string]interface{}{
-		"app": map[string]interface{}{
+	updates := map[string]any{
+		"app": map[string]any{
 			"version": "2.1.0", // Overwrites existing
 			"author":  "Fei Zheng", // Adds new
 		},
-		"newFeature": map[string]interface{}{
+		"newFeature": map[string]any{
 			"enabled": true,
 		},
 	}
@@ -111,7 +111,7 @@ func main() {
 
 	data := dp.Data()
 	if serverConfig, exists := data["server"]; exists {
-		if serverMap, ok := serverConfig.(map[string]interface{}); ok {
+		if serverMap, ok := serverConfig.(map[string]any); ok {
 			fmt.Printf("Server host from raw map: %v\n", serverMap["host"])
 		}
 	}
@@ -120,17 +120,17 @@ func main() {
 	fmt.Println("\n=== Simulated Config Loading ===")
 
 	// Simulate loading configuration from different sources
-	baseConfig := map[string]interface{}{
-		"app": map[string]interface{}{
+	baseConfig := map[string]any{
+		"app": map[string]any{
 			"name": "my-app",
 		},
-		"database": map[string]interface{}{
+		"database": map[string]any{
 			"driver": "sqlite",
 		},
 	}
 
-	prodConfig := map[string]interface{}{
-		"database": map[string]interface{}{
+	prodConfig := map[string]any{
+		"database": map[string]any{
 			"driver": "postgres",
 			"host":   "prod-db.example.com",
 			"port":   5432,
