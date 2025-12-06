@@ -52,7 +52,64 @@ func main() {
 }
 ```
 
-## API
+## JSON/YAML Support
+
+Built-in support for both JSON and YAML with unified DotIO interface:
+
+```go
+// Create DotIO with format
+io := dotpath.NewDotIO(dotpath.JSON)  // or dotpath.YAML
+
+// Load data from various sources
+io.LoadFromFile("config.json")
+io.LoadFromString(`{"key": "value"}`)
+io.LoadFromBytes([]byte("key: value"))
+
+// Use dot-path operations
+io.Set("app.version", "2.0.0")
+port := io.GetInt("server.port")
+
+// Save in any format (dynamic format switching!)
+io.SetFormat(dotpath.YAML)
+io.SaveToFile("config.yaml")
+```
+
+### DotIO Methods
+- `NewDotIO(format Format) *DotIO`
+- `NewDotIOWithData(data map[string]any, format Format) *DotIO`
+- `LoadFromFile(path string) error`
+- `LoadFromString(s string) error`
+- `LoadFromBytes(data []byte) error`
+- `SaveToFile(path string) error`
+- `ToString() (string, error)`
+- `ToBytes() ([]byte, error)`
+- `SetFormat(format Format)`
+- `GetFormat() Format`
+- `DotPath() *DotPath`
+
+### Quick Examples
+
+```go
+// JSON usage
+io := dotpath.NewDotIO(dotpath.JSON)
+io.LoadFromFile("config.json")
+io.Set("debug", true)
+io.SaveToFile("config.json")
+
+// YAML usage
+io := dotpath.NewDotIO(dotpath.YAML)
+io.LoadFromFile("config.yaml")
+io.Set("timeout", 30)
+io.SaveToFile("config.yaml")
+
+// Format switching
+io := dotpath.NewDotIO(dotpath.JSON)
+io.LoadFromFile("data.json")
+io.SetFormat(dotpath.YAML)  // Switch output format
+io.SaveToFile("data.yaml")
+```
+
+## Core API
 
 ### Constructor
 - `New(m map[string]any) *DotPath`

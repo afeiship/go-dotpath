@@ -2,7 +2,11 @@
   "permissions": {
     "allow": [
       "Bash(go test:*)",
-      "Bash(go run:*)"
+      "Bash(go run:*)",
+      "Bash(GOPROXY=https://goproxy.cn,direct go get:*)",
+      "Bash(git checkout:*)",
+      "Bash(ls:*)",
+      "Bash(go build:*)"
     ],
     "deny": [],
     "ask": []
