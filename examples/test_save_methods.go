@@ -30,7 +30,7 @@ func main() {
 
 	fmt.Println("✅ Saved back to test_config.yaml with preserved comments\n")
 
-	// Test 2: SaveAs method (preserves comments in target file if exists)
+	// Test 2: SaveAs method (always preserves comments and order for YAML)
 	fmt.Println("2. Testing SaveAs() method:")
 	adapter2, err := dotpath.LoadYAMLAdapter("test_config.yaml")
 	if err != nil {
@@ -42,13 +42,13 @@ func main() {
 	adapter2.Set("app.environment", "production")
 	adapter2.Set("features", []string{"auth", "logging", "metrics"})
 
-	// Save as a new file
+	// Save as a new file (should preserve comments from original)
 	err = adapter2.SaveAs("test_config_new.yaml")
 	if err != nil {
 		log.Fatalf("Failed to save as: %v", err)
 	}
 
-	fmt.Println("✅ Saved as test_config_new.yaml (new file, standard format)\n")
+	fmt.Println("✅ Saved as test_config_new.yaml (preserved comments from original)\n")
 
 	// Test 3: SaveAs to existing file (preserves existing comments)
 	fmt.Println("3. Testing SaveAs() to existing file:")
@@ -88,6 +88,6 @@ func main() {
 	fmt.Println("All save methods tested successfully!")
 	fmt.Println("\nFile summary:")
 	fmt.Println("- test_config.yaml: Updated in place with preserved comments")
-	fmt.Println("- test_config_new.yaml: New file with standard YAML format")
+	fmt.Println("- test_config_new.yaml: New file with preserved comments from original")
 	fmt.Println("- target_config.yaml: Updated target file")
 }

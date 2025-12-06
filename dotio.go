@@ -109,27 +109,32 @@ func (dio *DotIO) saveStandard(path string) error {
 }
 
 // SaveAs saves data to specified path with preservation options
-// For YAML files, attempts to preserve comments and order from the target file if it exists
+// For YAML files, always attempts to preserve comments and order
 func (dio *DotIO) SaveAs(path string) error {
-	// For YAML files, try to preserve comments and order from target file
+	// For YAML files, always preserve comments and order
 	if dio.format == YAML {
 		// Check if target file exists
 		if _, err := os.Stat(path); err == nil {
-			// File exists, try to preserve its comments and order
-			return dio.saveAsWithPreservation(path)
+			// File exists, preserve its comments and order
+			return dio.saveWithPreservation(path, path)
+		} else {
+			// File doesn't exist, try to preserve from original file if available
+			if dio.originalPath != "" {
+				return dio.saveWithPreservation(path, dio.originalPath)
+			}
 		}
 	}
 
-	// For JSON files or non-existent YAML files, use standard save
+	// For JSON files, use standard save
 	return dio.saveStandard(path)
 }
 
-// saveAsWithPreservation saves to specified path preserving comments from existing file
-func (dio *DotIO) saveAsWithPreservation(path string) error {
-	// Read existing target file
-	existingContent, err := os.ReadFile(path)
+// saveWithPreservation saves YAML file preserving comments from specified source file
+func (dio *DotIO) saveWithPreservation(targetPath, sourcePath string) error {
+	// Read source file for comment preservation
+	sourceContent, err := os.ReadFile(sourcePath)
 	if err != nil {
-		return fmt.Errorf("failed to read existing file: %w", err)
+		return fmt.Errorf("failed to read source file: %w", err)
 	}
 
 	// Generate new YAML content
@@ -138,12 +143,12 @@ func (dio *DotIO) saveAsWithPreservation(path string) error {
 		return fmt.Errorf("failed to generate YAML: %w", err)
 	}
 
-	// Preserve comments and order from existing file
-	preservedYAML := mergeYAMLWithPreservedOrder(string(existingContent), newYAML)
+	// Preserve comments and order from source file
+	preservedYAML := mergeYAMLWithPreservedOrder(string(sourceContent), newYAML)
 
 	// Write to target file
-	if err := os.WriteFile(path, []byte(preservedYAML), 0644); err != nil {
-		return fmt.Errorf("failed to write file %s: %w", path, err)
+	if err := os.WriteFile(targetPath, []byte(preservedYAML), 0644); err != nil {
+		return fmt.Errorf("failed to write file %s: %w", targetPath, err)
 	}
 
 	return nil
@@ -159,36 +164,11 @@ func (dio *DotIO) Save() error {
 
 	// For YAML files, try to preserve comments and order
 	if dio.format == YAML {
-		return dio.saveWithPreservation()
+		return dio.saveWithPreservation(dio.originalPath, dio.originalPath)
 	}
 
 	// For JSON files, use standard save
 	return dio.saveStandard(dio.originalPath)
-}
-
-// saveWithPreservation saves YAML files with comment and order preservation
-func (dio *DotIO) saveWithPreservation() error {
-	// Read original file
-	originalContent, err := os.ReadFile(dio.originalPath)
-	if err != nil {
-		return fmt.Errorf("failed to read original file: %w", err)
-	}
-
-	// Generate new YAML content
-	newYAML, err := dio.ToString()
-	if err != nil {
-		return fmt.Errorf("failed to generate YAML: %w", err)
-	}
-
-	// Preserve comments and order
-	preservedYAML := mergeYAMLWithPreservedOrder(string(originalContent), newYAML)
-
-	// Write back to file
-	if err := os.WriteFile(dio.originalPath, []byte(preservedYAML), 0644); err != nil {
-		return fmt.Errorf("failed to write file %s: %w", dio.originalPath, err)
-	}
-
-	return nil
 }
 
 // ToString converts data to string

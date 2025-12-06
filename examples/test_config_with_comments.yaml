@@ -1,12 +1,11 @@
-# Database settings
+# Database configuration section
 database:
-    host: localhost
-    password: secret
-    port: 5432
-    username: admin
-# App metadata
+  host: localhost
+  port: 5432
+  timeout: 30
+
+# Application settings
 app:
-    debug: true
-    environment: production
-    name: myapp
-    version: "1.0"
+  name: myapp
+  version: "1.0"
+  debug: false

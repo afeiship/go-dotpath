@@ -1,0 +1,12 @@
+# Database configuration section
+database:
+    host: localhost
+    port: 5432
+    timeout: 30
+    username: admin
+# Application settings
+app:
+    debug: true
+    name: myapp
+    new_feature: enabled
+    version: "1.0"
