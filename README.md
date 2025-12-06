@@ -54,7 +54,11 @@ func main() {
 
 ## JSON/YAML Support
 
-Built-in support for both JSON and YAML with unified DotIO interface:
+Built-in support for both JSON and YAML with unified DotIO interface.
+
+See detailed configuration examples:
+- 📋 [JSON Configuration Examples](docs/json-configuration.md)
+- 📋 [YAML Configuration Examples](docs/yaml-configuration.md)
 
 ```go
 // Create DotIO with format
@@ -128,3 +132,5 @@ io.SaveToFile("data.yaml")
 
 ### Access
 - `Data() map[string]any`
+
+---
